@@ -22,7 +22,7 @@ def modelparameters(model, teffmin, teffmax, logg, f_sed=False):  # to plot just
 
 
         for d in models:
-            if d['teff'] >= teffmin and d['teff'] <= teffmax:  # remove < and >  to plot one spectra d['teff']==number, to pick a log g do same as teff
+            if d['teff'] >= teffmin and d['teff'] <= teffmax:  # remove < and >  to plot one spectra d['teff']== number, to pick a log g do same as teff
                 teff, w, f = d['teff'], d['wavelength'], d['flux']
                 print teff
                 f = f / max(f)  # normalizes flux

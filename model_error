@@ -1,0 +1,38 @@
+from astrodbkit import astrodb
+
+ma_db = astrodb.Database('/Users/teacher/Desktop/Research/model_atmospheres.db')
+
+#import the usual suspects
+from matplotlib import pyplot as plt
+import numpy as np
+from pylab import rcParams
+import pandas as pd
+
+rcParams['figure.figsize'] = 8, 10
+
+def modelerr(teff,teffbelow,teffabove,logg,n,f_sed=False):
+    #requires a binned model, two other models, one with a teff below and one above, all with the same logg and (n)umber of bins
+    fteff = pd.read_csv('/Users/teacher/Desktop/Research/Models/CSV/t{}_g{}_n{}.txt'.format(teff,logg,n),index_col=0)
+    fteffbelow = pd.read_csv('/Users/teacher/Desktop/Research/Models/CSV/t{}_g{}_n{}.txt'.format(teffbelow,logg,n),index_col=0)
+    fteffabove = pd.read_csv('/Users/teacher/Desktop/Research/Models/CSV/t{}_g{}_n{}.txt'.format(teffabove,logg,n),index_col=0)
+    #draws the data from the previously made CSV files
+    ft = fteff['1']
+    fta = fteffabove['1']
+    ftb = fteffbelow['1']
+    #drawing out the flux data
+    ft = ft/(np.nanmean(ft))
+    fta = fta/(np.nanmean(fta))
+    ftb = ftb/(np.nanmean(ftb))
+    #normalizing flux
+    file = pd.DataFrame(fteff['1'])
+    file[2] = fta
+    file[3] = ftb
+    file[4] = ((ft - fta))
+    file[5] = ((ft - ftb))
+    file.columns = [teff,teffabove,teffbelow,'dif1','dif2']
+    file.plot()
+    print(file)
+    plt.xlim(1.9, 2.5) # sets xrange
+    yl = plt.ylabel('Normalized Flux')
+    xl = plt.xlabel('Wavelength (microns)')
+    #err.to_csv('/Users/teacher/Desktop/Research/Models/Errors/t{}_g{}_n{}.txt'.format(teff,logg,n), index=False)

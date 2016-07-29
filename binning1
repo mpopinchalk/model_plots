@@ -1,0 +1,49 @@
+from astrodbkit import astrodb
+
+ma_db = astrodb.Database('/Users/teacher/Desktop/Research/model_atmospheres.db')
+
+from matplotlib import pyplot as plt
+import numpy as np
+#from BDNYCdb import utilities as u
+from pylab import rcParams
+import pandas as pd
+
+rcParams['figure.figsize'] = 8, 10
+
+
+def binmodels(model, teffmin, teffmax, logg, wmin, wmax, n, f_sed=False):
+    """plot all models from any specified model grid
+    model: a string of the name of the model grid. also bins the model to n resolution by putting it into b bins with a distance of jump inbetween each bin, starting at wmin.
+    """
+    b = int(np.ceil((wmax-wmin)*n)) #calculating the number of bins
+    print(b)
+    jump = (wmax-wmin)/b
+    print(jump)
+    k = 0  # used to shift models up to fit multiple in one plot
+    models = ma_db.list("select * from {} where logg={} and teff between {} and {}".format(model, logg, teffmin, teffmax)).fetchall()# This pulls out all of the temps at one specific gravity
+    for g in models:#each model
+        teff, w, f = g[1], g[4], g[5]#pulling out the variables
+        start = wmin - (jump/2)
+        f = f / np.nanmean(f[np.where(np.logical_and(w>wmin,w<(wmax)))])  # normalizes flux
+        binf = [] #new arrays for binned model
+        binw = []
+        for i in range(0,b): #where the binning happens
+            end = start + jump
+            fnew = sum(f[np.where(np.logical_and(w>start,w<end))])
+            binf.append(fnew)
+            wnew = wmin + (i*jump)
+            binw.append(wnew)
+            #file.write('{}, {}\n'.format(fnew, wnew)) #writing to the file one line at a time
+            start = end
+        binf = binf/np.nanmean(binf)
+        file = pd.DataFrame(binw)
+        file[1] = binf
+        file.to_csv('/Users/teacher/Desktop/Research/Models/CSV/g{}_t{}_n{}.txt'.format(logg,teff,n), index=False)
+        plt.plot(w, f+k)
+        plt.plot(binw, binf+k)
+        plt.annotate(teff, xy=(2.37, k), annotation_clip=False)
+        k = k+1
+    plt.xlim(1.9, 2.5) # sets xrange
+    yl = plt.ylabel('Normalized Fux + constant')
+    xl = plt.xlabel('Wavelength (microns)')
+    plt.show()
